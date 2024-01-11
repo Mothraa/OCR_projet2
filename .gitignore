@@ -1,0 +1,21 @@
+#virtual environment python subfolder
+.venv/
+
+# Windows thumbnails and links
+Thumbs.db
+._*
+*.lnk
+
+# backups
+*.bak
+
+# subfolders
+.result/
+.output/
+output/
+
+# ignore all .png files in the output directory and any of its subdirectories
+output/**/*.png
+
+# ignore all .csv files
+*.csv
