@@ -1,23 +1,9 @@
 import requests
 from bs4 import BeautifulSoup #https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 import re # gestion des expressions régulières (bibliothèque standard)
+import csv
 import datetime
 import os.path
-
-
-
-
-# informations à récupérer
-# ● product_page_url
-# ● universal_ product_code (upc)
-# ● title
-# ● price_including_tax
-# ● price_excluding_tax
-# ● number_available
-# ● product_description
-# ● category
-# ● review_rating
-# ● image_url
 
 
 # mapping des chiffres écrits en toute lettre en valeurs décimales
@@ -44,6 +30,18 @@ def book_stock(arg):
 # fonction qui récupère les informations de la page d'un livre a partir d'une url et renvoi un dictionnaire
 def parsing_page_book(url_book):
 
+# informations à récupérer
+# ● product_page_url
+# ● universal_ product_code (upc)
+# ● title
+# ● price_including_tax
+# ● price_excluding_tax
+# ● number_available
+# ● product_description
+# ● category
+# ● review_rating
+# ● image_url
+
     page = requests.get(url_book)
 
     if page.status_code == 200:
@@ -53,7 +51,7 @@ def parsing_page_book(url_book):
 
         book_title = page_parsed.find('div',{'class':'col-sm-6 product_main'}).find('h1').contents[0]
 
-        product_description = page_parsed.find('div',{'id':'product_description'}).find_next_sibling().contents # on va chercher l'element (sibling) suivant
+        product_description = page_parsed.find('div',{'id':'product_description'}).find_next_sibling().contents[0] # on va chercher l'element (sibling) suivant
 
         review_rating = page_parsed.find('p',{'class':'star-rating'}).attrs['class'][1] # récupération du nombre indiqué dans le nom de la classe qui indique le nombre d'étoiles par ex : 'star-rating Two'
         #TODO faire un mapping des valeurs (map ??) pour modifier le texte "Two" en integer
@@ -81,5 +79,15 @@ def parsing_page_book(url_book):
 
 # main
 url = "http://books.toscrape.com/catalogue/the-girl-on-the-train_844/index.html"
-print(parsing_page_book(url))
 
+
+#ecriture du fichier csv
+try:
+    with open('test.csv', 'w', encoding='utf-8', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=parsing_page_book(url).keys(), delimiter=";")
+        writer.writeheader()
+        writer.writerow(parsing_page_book(url)) #a remplacer par writerows quand le dictionnaire aura plus d'une ligne
+except IOError as err:
+    print("Problème lors de l'écriture du csv :", err)
+except:
+    print("une erreur s'est produite lors de l'écriture du csv : ") #TODO est-il possible d'afficher également le message d'erreur ?
