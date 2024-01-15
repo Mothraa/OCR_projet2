@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup #https://www.crummy.com/software/BeautifulSoup/bs4
 import re # gestion des expressions régulières (bibliothèque standard)
 import csv
 import datetime
-import os.path
+import os
 
 
 # mapping des chiffres écrits en toute lettre en valeurs décimales
@@ -29,18 +29,6 @@ def book_stock(arg):
     
 # fonction qui récupère les informations de la page d'un livre a partir d'une url et renvoi un dictionnaire
 def parsing_page_book(url_book):
-
-# informations à récupérer
-# ● product_page_url
-# ● universal_ product_code (upc)
-# ● title
-# ● price_including_tax
-# ● price_excluding_tax
-# ● number_available
-# ● product_description
-# ● category
-# ● review_rating
-# ● image_url
 
     page = requests.get(url_book)
 
@@ -77,17 +65,29 @@ def parsing_page_book(url_book):
     return book_dict
 
 
-# main
+##### main #####
+
 url = "http://books.toscrape.com/catalogue/the-girl-on-the-train_844/index.html"
 
+# date du jour
+jour = datetime.datetime.now().strftime(r'%Y%m%d') #'%Y-%m-%d %H:%M:%S'
 
-#ecriture du fichier csv
+# nommage du répertoire et du fichier de sortie
+repertoire_ouput = r".//output//"
+nom_fichier = str(repertoire_ouput + jour + "-book_list.csv")
+
+# création du répertoire output si inexistant
+os.makedirs(repertoire_ouput, exist_ok=True)
+
+# ecriture du fichier csv
 try:
-    with open('test.csv', 'w', encoding='utf-8', newline='') as f:
+    with open(nom_fichier, 'w', encoding='utf-8', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=parsing_page_book(url).keys(), delimiter=";")
         writer.writeheader()
         writer.writerow(parsing_page_book(url)) #a remplacer par writerows quand le dictionnaire aura plus d'une ligne
 except IOError as err:
     print("Problème lors de l'écriture du csv :", err)
 except:
-    print("une erreur s'est produite lors de l'écriture du csv : ") #TODO est-il possible d'afficher également le message d'erreur ?
+    print("une autre erreur s'est produite...") #TODO est-il possible d'afficher également le message d'erreur ?
+
+
