@@ -18,6 +18,26 @@ def book_nb_etoile_en_decimal(arg):
         }
     return mapping_etoile.get(arg, -1) # -1 si inexistant
 
+
+#a partir d'une url de category, retourne une liste des urls des livres
+def parsing_category_book_list(url_category):
+    
+    page = requests.get(url_category)
+    
+    if page.status_code == 200:
+        page_parsed = BeautifulSoup(page.content,'lxml')
+
+        book_list = []
+
+        # recherche des urls vers les livres
+        for link in page_parsed.find('h3').find_all_next('a'):
+            if len(link.attrs) == 2: # bidouille après analyse au debugger pour filtrer les doublons et le dernier lien (bouton next)
+                book_list.append(link.attrs['href'].replace('../../../','http://books.toscrape.com/catalogue/'))
+
+
+    return book_list           
+
+
 def book_stock(arg):
         # print(re.findall("\d+", arg))
         if re.findall(r"\d+", arg)[0].isdigit():
@@ -67,7 +87,12 @@ def parsing_page_book(url_book):
 
 ##### main #####
 
+
+
 url = "http://books.toscrape.com/catalogue/the-girl-on-the-train_844/index.html"
+url_category = "http://books.toscrape.com/catalogue/category/books/sequential-art_5/page-1.html"
+
+
 
 # date du jour
 jour = datetime.datetime.now().strftime(r'%Y%m%d') #'%Y-%m-%d %H:%M:%S'
@@ -78,6 +103,10 @@ nom_fichier = str(repertoire_ouput + jour + "-book_list.csv")
 
 # création du répertoire output si inexistant
 os.makedirs(repertoire_ouput, exist_ok=True)
+
+
+category_book_list = parsing_category_book_list(url_category)
+print(category_book_list)
 
 # ecriture du fichier csv
 try:
