@@ -2,13 +2,13 @@ import requests
 from bs4 import BeautifulSoup #https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 import re # gestion des expressions régulières (bibliothèque standard)
 import csv
-import datetime
+from datetime import datetime
 import os
 
 
 # mapping des chiffres écrits en toute lettre en valeurs décimales
 def book_nb_etoile_en_decimal(arg):
-    mapping_etoile = {
+    mapping_stars = {
         'Zero':0,
         'One':1,
         'Two':2,
@@ -16,7 +16,7 @@ def book_nb_etoile_en_decimal(arg):
         'Four':4,
         'Five':5
         }
-    return mapping_etoile.get(arg, -1) # -1 si inexistant
+    return mapping_stars.get(arg, -1) # -1 si inexistant
 
 
 #a partir d'une url de category, retourne une liste des urls des livres
@@ -41,11 +41,11 @@ def parsing_category_book_list(url_category):
 def book_stock(arg):
         # print(re.findall("\d+", arg))
         if re.findall(r"\d+", arg)[0].isdigit():
-            stock_nombre = int(re.findall(r"\d+", arg)[0])
+            stock_nb_stars = int(re.findall(r"\d+", arg)[0])
         else:
-            stock_nombre = -1
+            stock_nb_stars = -1
         
-        return stock_nombre
+        return stock_nb_stars
     
 # fonction qui récupère les informations de la page d'un livre a partir d'une url et renvoi un dictionnaire
 def parsing_page_book(url_book):
@@ -95,7 +95,7 @@ url_category = "http://books.toscrape.com/catalogue/category/books/sequential-ar
 
 
 # date du jour
-jour = datetime.datetime.now().strftime(r'%Y%m%d') #'%Y-%m-%d %H:%M:%S'
+jour = datetime.now().strftime(r'%Y%m%d') #'%Y-%m-%d %H:%M:%S'
 
 # nommage du répertoire et du fichier de sortie
 repertoire_ouput = r".//output//"
@@ -114,9 +114,5 @@ try:
         writer = csv.DictWriter(f, fieldnames=parsing_page_book(url).keys(), delimiter=";")
         writer.writeheader()
         writer.writerow(parsing_page_book(url)) #a remplacer par writerows quand le dictionnaire aura plus d'une ligne
-except IOError as err:
-    print("Problème lors de l'écriture du csv :", err)
-except:
-    print("une autre erreur s'est produite...") #TODO est-il possible d'afficher également le message d'erreur ?
-
-
+except Exception as err:
+    print("Un problème est survenu lors de l'écriture du csv :", err)
