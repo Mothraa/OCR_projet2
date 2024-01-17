@@ -21,19 +21,16 @@ def book_nb_etoile_en_decimal(arg):
 
 #a partir d'une url de category, retourne une liste des urls des livres
 def parsing_category_book_list(url_category):
-    
+    book_list = []
     page = requests.get(url_category)
     
     if page.status_code == 200:
         page_parsed = BeautifulSoup(page.content,'lxml')
 
-        book_list = []
-
         # recherche des urls vers les livres
         for link in page_parsed.find('h3').find_all_next('a'):
             if len(link.attrs) == 2: # bidouille après analyse au debugger pour filtrer les doublons et le dernier lien (bouton next)
                 book_list.append(link.attrs['href'].replace('../../../','http://books.toscrape.com/catalogue/'))
-
 
     return book_list           
 
@@ -65,6 +62,7 @@ def parsing_page_book(url_book):
         #TODO faire un mapping des valeurs (map ??) pour modifier le texte "Two" en integer
 
         image_url = page_parsed.find('div',{'id':'product_gallery'}).find('img').attrs.get('src')#find('div',{'class':'item active'})
+        image_url.replace("../../","http://books.toscrape.com/")
 
         # récupération des valeurs contenues dans le tableau "Product Information"
         liste_temp = [p.get_text() for p in page_parsed.find('table',{'class':'table table-striped'}).findAll('td')]
@@ -76,7 +74,7 @@ def parsing_page_book(url_book):
                     'title':book_title,
                     'price_including_tax':liste_temp[3],
                     'price_excluding_tax':liste_temp[2],
-                    'number_avaible':book_stock(liste_temp[5]), # a décomposer par split de la chaine ou traitement en expression régulière
+                    'number_avaible':book_stock(liste_temp[5]),
                     'product_description':product_description,
                     'category':liste_temp[1], # category == Product Type
                     'review_rating':book_nb_etoile_en_decimal(review_rating),
@@ -87,15 +85,12 @@ def parsing_page_book(url_book):
 
 ##### main #####
 
-
-
 url = "http://books.toscrape.com/catalogue/the-girl-on-the-train_844/index.html"
 url_category = "http://books.toscrape.com/catalogue/category/books/sequential-art_5/page-1.html"
 
 
-
 # date du jour
-jour = datetime.now().strftime(r'%Y%m%d') #'%Y-%m-%d %H:%M:%S'
+jour = datetime.now().strftime(r'%Y%m%d-%H%M') #'%Y-%m-%d %H:%M:%S'
 
 # nommage du répertoire et du fichier de sortie
 repertoire_ouput = r".//output//"
@@ -105,14 +100,39 @@ nom_fichier = str(repertoire_ouput + jour + "-book_list.csv")
 os.makedirs(repertoire_ouput, exist_ok=True)
 
 
-category_book_list = parsing_category_book_list(url_category)
-print(category_book_list)
+category_book_list = []
+category_book_list_all_pages = []
+
+
+i = 1
+while True:
+
+    url_category_page = "http://books.toscrape.com/catalogue/category/books/sequential-art_5/page-{}.html".format(i)
+
+    test_page_existante = requests.get(url_category_page)
+
+    # on sort de la boucle while si la page n'existe pas
+    if test_page_existante.status_code == 404:
+        break
+
+    category_book_list = parsing_category_book_list(url_category_page)
+    category_book_list_all_pages.extend(category_book_list)
+    i += 1
+
+j = 0
+temp_list_de_dict = []
+while j < len(category_book_list_all_pages):
+    temp_list_de_dict.append(parsing_page_book(category_book_list_all_pages[j]))
+    j += 1
+    if j == 5:
+        break
+
 
 # ecriture du fichier csv
 try:
     with open(nom_fichier, 'w', encoding='utf-8', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=parsing_page_book(url).keys(), delimiter=";")
+        writer = csv.DictWriter(f, fieldnames=temp_list_de_dict[0].keys(), delimiter = ";")#parsing_page_book(url).keys(), delimiter=";")
         writer.writeheader()
-        writer.writerow(parsing_page_book(url)) #a remplacer par writerows quand le dictionnaire aura plus d'une ligne
+        writer.writerows(temp_list_de_dict) #a remplacer par writerows quand le dictionnaire aura plus d'une ligne
 except Exception as err:
     print("Un problème est survenu lors de l'écriture du csv :", err)
