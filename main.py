@@ -32,13 +32,11 @@ def parsing_category(url):
         for link in page_parsed.find('ul',{'class':'nav nav-list'}).find_all_next('li'):
 
             if link.parent.attrs.get('class') is None: # filtrage complémentaire
-
                 category_url_list.append('http://books.toscrape.com/'+ link.contents[1].attrs['href'])
 
     return category_url_list
 
 # a partir d'une liste d'url de categories on retourne la liste de toutes les pages des categories
-
 def category_url_all_pages_list(category_url_list):
 
     all_pages_list = []
@@ -142,8 +140,8 @@ def parsing_page_book(category_name, url_book):
                     }
     return book_dict
 
-# ecriture du fichier csv
-def write_csv(list_of_books_by_category):
+# ecriture des fichiers csv et jpeg
+def write_files(list_of_books_by_category):
 
     # date du jour
     jour = datetime.now().strftime(r'%Y%m%d') #'%Y-%m-%d %H:%M:%S'
@@ -189,28 +187,35 @@ url = "http://books.toscrape.com/"
 # l1 = list(d1.items())
 # print(l1)
 
+
+# on récupère la liste des categories
 category_url_list = parsing_category(url)
 
+# depuis la premiere page des catégories on teste et récupère l'ensemble des pages de catégories
+category_url_list_all = category_url_all_pages_list(category_url_list)
 
-temp = category_url_all_pages_list(category_url_list)
+
 
 j = 0
 category_book_list_all_pages = []
 
-while j < len(temp):
-    category_book_list_all_pages.extend(parsing_book_list_by_category(temp[j]))
+# on récupère finalement l'ensemble des url des livres
+while j < len(category_url_list_all):
+    category_book_list_all_pages.extend(parsing_book_list_by_category(category_url_list_all[j]))
     j += 1
     if j == 2: #pour test, ne traite que les 2 premieres
         break
+
 
 j = 0
-list_of_books_by_category = []
+books_list = []
+
+# parcours de chaque page de livre pour récupérer l'ensemble des informations souhaitées
 while j < len(category_book_list_all_pages):
-    #TODO modifier parsing_page_book pour ajouter en entrée la category
-    list_of_books_by_category.append(parsing_page_book(category_book_list_all_pages[j].get('category'), category_book_list_all_pages[j].get('book_url')))
+    books_list.append(parsing_page_book(category_book_list_all_pages[j].get('category'), category_book_list_all_pages[j].get('book_url')))
     j += 1
     if j == 2: #pour test, ne traite que les 2 premieres
         break
 
-
-write_csv(list_of_books_by_category)
+# ecriture des fichiers en sortie (csv et images)
+write_files(books_list)
