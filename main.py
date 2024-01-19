@@ -113,7 +113,7 @@ def parsing_page_book(category_name, url_book):
         page_parsed = BeautifulSoup(page.content,'lxml') # lxml => interprétant "parser"
 
         book_title = page_parsed.find('div',{'class':'col-sm-6 product_main'}).find('h1').contents[0]
-
+#TODO : ajouter une exception quand Product Description n'existe pas. ex: http://books.toscrape.com/catalogue/alice-in-wonderland-alices-adventures-in-wonderland-1_5/index.html
         product_description = page_parsed.find('div',{'id':'product_description'}).find_next_sibling().contents[0] # on va chercher l'element (sibling) suivant
 
         review_rating = page_parsed.find('p',{'class':'star-rating'}).attrs['class'][1] # récupération du nombre indiqué dans le nom de la classe qui indique le nombre d'étoiles par ex : 'star-rating Two'
@@ -138,6 +138,17 @@ def parsing_page_book(category_name, url_book):
                     }
     return book_dict
 
+
+def write_image(repertoire, name, image_url):
+
+    r = requests.get(image_url, stream=True)
+    if r.status_code == 200:
+        with open(repertoire + name, 'wb') as file:
+            shutil.copyfileobj(r.raw, file)
+        del r
+    return
+     
+
 # ecriture des fichiers csv et jpeg
 def write_files(list_of_books_by_category):
     
@@ -157,8 +168,11 @@ def write_files(list_of_books_by_category):
                 # nommage du répertoire et du fichier de sortie
                 repertoire_ouput = r".//output//" + category_name + r"//"
                 nom_fichier_csv = str(repertoire_ouput + jour + "-" + category_name + "-list.csv")
-                # création du répertoire output si inexistant
+                # création du répertoire output et du sous répertoire de la catégorie si inexistant
                 os.makedirs(repertoire_ouput, exist_ok=True)
+                # création du répertoire du sous répertoire images dans la catégorie                
+                repertoire_images = repertoire_ouput + r'images//'
+                os.makedirs(repertoire_images, exist_ok=True)
 
         try:
             with open(nom_fichier_csv, 'w', encoding='utf-8', newline='') as f:
@@ -170,14 +184,23 @@ def write_files(list_of_books_by_category):
                     writer.writeheader()
                 #TODO a extraire proprement de la boucle if car doublon de code. On pourrait ne laisser que previous_category_name = category_name mais code pas clair a comprendre
                     writer.writerow(list_of_books_by_category[i])
+                    # enregistrement du fichier image
+                    link_image = list_of_books_by_category[i]['image_url']
+                    name_image = list_of_books_by_category[i]['upc'] + '.jpg'
+                    write_image(repertoire_images, name_image, link_image)
+
                     i += 1
                     previous_category_name = category_name
                     category_name = list_of_books_by_category[i]['category']
                 ####### fin TODO #####
 
-
                 while category_name == previous_category_name and i < len(list_of_books_by_category):
                     writer.writerow(list_of_books_by_category[i])
+                    # enregistrement du fichier image
+                    link_image = list_of_books_by_category[i]['image_url']
+                    name_image = list_of_books_by_category[i]['upc'] + '.jpg'
+                    write_image(repertoire_images, name_image, link_image)
+
                     i += 1
                     previous_category_name = category_name
                     category_name = list_of_books_by_category[i]['category']
@@ -207,18 +230,13 @@ category_book_list_all_pages = []
 while j < len(category_url_list_all):
     category_book_list_all_pages.extend(parsing_book_list_by_category(category_url_list_all[j]))
     j += 1
-    if j == 20: #pour test, ne traite que les 10 premieres
-        break
 
 j = 0
 books_list = []
 # parcours de chaque page de livre pour récupérer l'ensemble des informations souhaitées
 while j < len(category_book_list_all_pages):
     books_list.append(parsing_page_book(category_book_list_all_pages[j].get('category'), category_book_list_all_pages[j].get('book_url')))
-
     j += 1
-    if j == 20: #pour test, ne traite que les 10 premieres
-        break
 
 # ecriture des fichiers en sortie (csv et images)
 write_files(books_list)
