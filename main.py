@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup #https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 import re # gestion des expressions régulières (bibliothèque standard)
 import csv
+import shutil # pour la manipulation et l'enregistrement des fichiers (bibliothèque standard)
 from datetime import datetime
 import os
 
@@ -24,7 +25,7 @@ def parsing_category(url):
     page = requests.get(url)
 
     if page.status_code == 200:
-    #TODO ajouter une exception
+    #TODO ajouter une exception ?
         page_parsed = BeautifulSoup(page.content,'lxml') # lxml => interprétant "parser"
 
         category_url_list = []
@@ -53,7 +54,7 @@ def category_url_all_pages_list(category_url_list):
 
             test_page_existante = requests.get(category_url_page) # on regarde si il une page 2 existe
 
-                # on sort de la boucle while si la page n'existe pas
+            # on sort de la boucle while si la page n'existe pas
             if test_page_existante.status_code == 200:
 
                 all_pages_list.append(category_url_page)
@@ -66,7 +67,6 @@ def category_url_all_pages_list(category_url_list):
                 break
 
     return all_pages_list
-
 
 
 
@@ -94,15 +94,13 @@ def parsing_book_list_by_category(url_category):
 
     return book_url_list
 
-
-def book_stock(arg):
-        # print(re.findall("\d+", arg))
+# extrait de la chaine de caractère du stock d'un livre, un nombre décimal
+def stock_to_int(arg):
         if re.findall(r"\d+", arg)[0].isdigit():
-            stock_nb_stars = int(re.findall(r"\d+", arg)[0])
+            stock_nb = int(re.findall(r"\d+", arg)[0])
         else:
-            stock_nb_stars = -1
-        
-        return stock_nb_stars
+            stock_nb = -1
+        return stock_nb
     
 # fonction qui récupère les informations de la page d'un livre a partir d'une url et renvoi un dictionnaire
 def parsing_page_book(category_name, url_book):
@@ -110,7 +108,7 @@ def parsing_page_book(category_name, url_book):
     page = requests.get(url_book)
 
     if page.status_code == 200:
-        #TODO ajouter une exception
+        #TODO ajouter une exception ?
         # "Parsage" d'une page de livre
         page_parsed = BeautifulSoup(page.content,'lxml') # lxml => interprétant "parser"
 
@@ -132,7 +130,7 @@ def parsing_page_book(category_name, url_book):
                     'title':book_title,
                     'price_including_tax':liste_temp[3],
                     'price_excluding_tax':liste_temp[2],
-                    'number_avaible':book_stock(liste_temp[5]),
+                    'number_avaible':stock_to_int(liste_temp[5]),
                     'product_description':product_description,
                     'category':category_name,
                     'review_rating':book_nb_etoile_en_decimal(review_rating),
@@ -142,29 +140,54 @@ def parsing_page_book(category_name, url_book):
 
 # ecriture des fichiers csv et jpeg
 def write_files(list_of_books_by_category):
-
+    
     # date du jour
     jour = datetime.now().strftime(r'%Y%m%d') #'%Y-%m-%d %H:%M:%S'
 
+    # init de la boucle while de lecture de la liste de livres
+    i = 0
+    category_name = list_of_books_by_category[i]['category'] # catégorie de la ligne courante
+    previous_category_name ='' # catégorie de la ligne précédente
 
-    category_name = list_of_books_by_category[0]['category']
+
+    while i < len(list_of_books_by_category):
+
+        # si on change de catégorie, on créé un nouveau répertoire et fichier csv
+        if category_name != previous_category_name:
+                # nommage du répertoire et du fichier de sortie
+                repertoire_ouput = r".//output//" + category_name + r"//"
+                nom_fichier_csv = str(repertoire_ouput + jour + "-" + category_name + "-list.csv")
+                # création du répertoire output si inexistant
+                os.makedirs(repertoire_ouput, exist_ok=True)
+
+        try:
+            with open(nom_fichier_csv, 'w', encoding='utf-8', newline='') as f:
+
+                writer = csv.DictWriter(f, fieldnames=list_of_books_by_category[i].keys(), delimiter = ";")
+
+                # lors de la première itération sur le fichier on créé les entêtes de colonne
+                if category_name != previous_category_name and i < len(list_of_books_by_category):
+                    writer.writeheader()
+                #TODO a extraire proprement de la boucle if car doublon de code. On pourrait ne laisser que previous_category_name = category_name mais code pas clair a comprendre
+                    writer.writerow(list_of_books_by_category[i])
+                    i += 1
+                    previous_category_name = category_name
+                    category_name = list_of_books_by_category[i]['category']
+                ####### fin TODO #####
 
 
-    # nommage du répertoire et du fichier de sortie
-    repertoire_ouput = r".//output//" + category_name + r"//"
-    nom_fichier = str(repertoire_ouput + jour + "-" + category_name + "_list.csv")
+                while category_name == previous_category_name and i < len(list_of_books_by_category):
+                    writer.writerow(list_of_books_by_category[i])
+                    i += 1
+                    previous_category_name = category_name
+                    category_name = list_of_books_by_category[i]['category']
 
-    # création du répertoire output si inexistant
-    os.makedirs(repertoire_ouput, exist_ok=True)
+        except Exception as err:
+            print("Un problème est survenu lors de l'écriture du csv :", err)
+        continue
 
-    try:
-        with open(nom_fichier, 'w', encoding='utf-8', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=list_of_books_by_category[0].keys(), delimiter = ";")#parsing_page_book(url).keys(), delimiter=";")
-            writer.writeheader()
-            writer.writerows(list_of_books_by_category) #a remplacer par writerows quand le dictionnaire aura plus d'une ligne
-    except Exception as err:
-        print("Un problème est survenu lors de l'écriture du csv :", err)
-    return
+
+
 
 
 
@@ -172,49 +195,29 @@ def write_files(list_of_books_by_category):
 
 url = "http://books.toscrape.com/"
 
-# toto = [{1 : 1}, {1 : 9}, {1 : 5}, {1 : 2}, {1 : 5}, {9 : 1}, {1 : 1}, {5 : 8}]
-# student_tuples = [
-#     ('john', 'A', 15),
-#     ('jane', 'B', 12),
-#     ('dave', 'B', 10),
-# ]
-# toto_sorted = sorted(student_tuples, key=lambda student: student[2])
-
-# print(toto)
-# print(toto_sorted)
-#conversion en tuples pour pouvoir trier
-# d1 = {"x": 1, "y": 2, "z": 3}
-# l1 = list(d1.items())
-# print(l1)
-
-
 # on récupère la liste des categories
 category_url_list = parsing_category(url)
 
 # depuis la premiere page des catégories on teste et récupère l'ensemble des pages de catégories
 category_url_list_all = category_url_all_pages_list(category_url_list)
 
-
-
 j = 0
 category_book_list_all_pages = []
-
 # on récupère finalement l'ensemble des url des livres
 while j < len(category_url_list_all):
     category_book_list_all_pages.extend(parsing_book_list_by_category(category_url_list_all[j]))
     j += 1
-    if j == 2: #pour test, ne traite que les 2 premieres
+    if j == 20: #pour test, ne traite que les 10 premieres
         break
-
 
 j = 0
 books_list = []
-
 # parcours de chaque page de livre pour récupérer l'ensemble des informations souhaitées
 while j < len(category_book_list_all_pages):
     books_list.append(parsing_page_book(category_book_list_all_pages[j].get('category'), category_book_list_all_pages[j].get('book_url')))
+
     j += 1
-    if j == 2: #pour test, ne traite que les 2 premieres
+    if j == 20: #pour test, ne traite que les 10 premieres
         break
 
 # ecriture des fichiers en sortie (csv et images)
