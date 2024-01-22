@@ -1,58 +1,78 @@
-import requests
-from bs4 import BeautifulSoup #https://www.crummy.com/software/BeautifulSoup/bs4/doc/
-import re # gestion des expressions régulières (bibliothèque standard)
+import re
 import csv
-import shutil # pour la manipulation et l'enregistrement des fichiers (bibliothèque standard)
+import shutil
 from datetime import datetime
 import os
 
+import requests
+from bs4 import BeautifulSoup
 
-# mapping des chiffres écrits en toute lettre en valeurs décimales
+
 def book_nb_etoile_en_decimal(arg):
+    """Transforme une chaine de chiffres écrits en toute lettre en nombre par mapping de valeurs
+     Attrs:
+    - arg: une chaine
+     Returns:
+    - one integer, -1 if not found
+    """
     mapping_stars = {
-        'Zero':0,
-        'One':1,
-        'Two':2,
-        'Tree':3,
-        'Four':4,
-        'Five':5
-        }
-    return mapping_stars.get(arg, -1) # -1 si inexistant
+        'Zero': 0,
+        'One': 1,
+        'Two': 2,
+        'Three': 3,
+        'Four': 4,
+        'Five': 5
+    }
+    return mapping_stars.get(arg, -1)
 
-# a partir de la page d'accueil retourne la liste des urls des catégories
+
 def parsing_category(url):
-
+    """from the url of the main page, find the list of category urls
+     Attrs:
+    - url: a string with url
+     Returns:
+    - category_url_list: a list of url of categories
+    """
     page = requests.get(url)
 
     if page.status_code == 200:
-    #TODO ajouter une exception ?
-        page_parsed = BeautifulSoup(page.content,'lxml') # lxml => interprétant "parser"
-
+        # TODO ajouter une exception ?
+        # lxml => interprétant "parser"
+        page_parsed = BeautifulSoup(page.content, 'lxml')
         category_url_list = []
 
-        for link in page_parsed.find('ul',{'class':'nav nav-list'}).find_all_next('li'):
+        for link in page_parsed.find('ul', {'class': 'nav nav-list'}).find_all_next('li'):
 
-            if link.parent.attrs.get('class') is None: # filtrage complémentaire
-                category_url_list.append('http://books.toscrape.com/'+ link.contents[1].attrs['href'])
+            # filtrage complémentaire
+            if link.parent.attrs.get('class') is None:
+                category_url_list.append('http://books.toscrape.com/' + link.contents[1].attrs['href'])
 
     return category_url_list
 
-# a partir d'une liste d'url de categories on retourne la liste de toutes les pages des categories
-def category_url_all_pages_list(category_url_list):
 
+def category_url_all_pages_list(category_url_list):
+    """from a list of category urls, go through the entire list of category urls (if several result pages)
+     Attrs:
+    - category_url_list: a urls list of first pages of category
+     Returns:
+    - all_pages_list: the full list of category urls
+    """
     all_pages_list = []
 
     for category_url in category_url_list:
 
-        i = 1 # itérateur de la boucle
+        i = 1
         while True:
 
             category_url_page = category_url
 
-            if i> 1: # dans le cas ou il n'y a qu'une seule page, on lit index.html ; puis on va lire page-2.html, page-3.html...
-                category_url_page = category_url.replace('index.html','page-{}.html'.format(i))
+            # when there is only one page, we read index.html
+            # then page-2.html, page-3.html...
+            if i > 1:
+                category_url_page = category_url.replace('index.html', 'page-{}.html'.format(i))
 
-            test_page_existante = requests.get(category_url_page) # on regarde si il une page 2 existe
+            # on regarde si il une page 2 existe
+            test_page_existante = requests.get(category_url_page)
 
             # on sort de la boucle while si la page n'existe pas
             if test_page_existante.status_code == 200:
@@ -69,73 +89,87 @@ def category_url_all_pages_list(category_url_list):
     return all_pages_list
 
 
-
-# a partir d'une url de category, retourne une liste des urls des livres
 def parsing_book_list_by_category(url_category):
-    #TODO ajouter le split de la category a partir de l'url, renvoyer un dict
+    """from a category url, find all the books url
+     Attrs:
+    - url_category: one category page url
+     Returns:
+    - book_url_list: a list of book (url)
+    """
     book_url_list = []
 
     book_url_dict = {
-                    'category',
-                    'book_url'
-                    }
-    
+        'category',
+        'book_url'
+    }
+
     page = requests.get(url_category)
     category = url_category.split('/')[-2]
 
     if page.status_code == 200:
-        page_parsed = BeautifulSoup(page.content,'lxml')
+        page_parsed = BeautifulSoup(page.content, 'lxml')
 
         # recherche des urls vers les livres
         for link in page_parsed.find('h3').find_all_next('a'):
-            if len(link.attrs) == 2: # filtrage complémentaire pour supprimer les doublons et le dernier lien (bouton next)
-                book_url_dict = {'category' : category, 'book_url': link.attrs['href'].replace('../../../','http://books.toscrape.com/catalogue/')}
+            # filtrage complémentaire pour supprimer les doublons et le dernier lien (bouton next)
+            if len(link.attrs) == 2:
+                book_url_dict = {'category': category, 'book_url': link.attrs['href'].replace('../../../', 'http://books.toscrape.com/catalogue/')}
                 book_url_list.append(book_url_dict)
 
     return book_url_list
 
+
 # extrait de la chaine de caractère du stock d'un livre, un nombre décimal
 def stock_to_int(arg):
-        if re.findall(r"\d+", arg)[0].isdigit():
-            stock_nb = int(re.findall(r"\d+", arg)[0])
-        else:
-            stock_nb = -1
-        return stock_nb
-    
+    if re.findall(r"\d+", arg)[0].isdigit():
+        stock_nb = int(re.findall(r"\d+", arg)[0])
+    else:
+        stock_nb = -1
+    return stock_nb
+
+
 # fonction qui récupère les informations de la page d'un livre a partir d'une url et renvoi un dictionnaire
 def parsing_page_book(category_name, url_book):
 
     page = requests.get(url_book)
 
     if page.status_code == 200:
-        #TODO ajouter une exception ?
+        # TODO ajouter une exception ?
         # "Parsage" d'une page de livre
-        page_parsed = BeautifulSoup(page.content,'lxml') # lxml => interprétant "parser"
+        # lxml => interprétant "parser"
+        page_parsed = BeautifulSoup(page.content, 'lxml')
 
-        book_title = page_parsed.find('div',{'class':'col-sm-6 product_main'}).find('h1').contents[0]
-#TODO : ajouter une exception quand Product Description n'existe pas. ex: http://books.toscrape.com/catalogue/alice-in-wonderland-alices-adventures-in-wonderland-1_5/index.html
-        product_description = page_parsed.find('div',{'id':'product_description'}).find_next_sibling().contents[0] # on va chercher l'element (sibling) suivant
+        book_title = page_parsed.find('div', {'class': 'col-sm-6 product_main'}).find('h1').contents[0]
 
-        review_rating = page_parsed.find('p',{'class':'star-rating'}).attrs['class'][1] # récupération du nombre indiqué dans le nom de la classe qui indique le nombre d'étoiles par ex : 'star-rating Two'
+        try:
+            # on va chercher l'element (sibling) suivant
+            product_description = page_parsed.find('div', {'id': 'product_description'}).find_next_sibling().contents[0]
+        # exception quand Product Description n'existe pas
+        # ex: http://books.toscrape.com/catalogue/alice-in-wonderland-alices-adventures-in-wonderland-1_5/index.html
+        except AttributeError:
+            product_description = ''
 
-        image_url = page_parsed.find('div',{'id':'product_gallery'}).find('img').attrs.get('src').replace(r"../../","http://books.toscrape.com/")
+        # récupération du nombre indiqué dans le nom de la classe qui indique le nombre d'étoiles par ex : 'star-rating Two'
+        review_rating = page_parsed.find('p', {'class': 'star-rating'}).attrs['class'][1]
+
+        image_url = page_parsed.find('div', {'id': 'product_gallery'}).find('img').attrs.get('src').replace(r"../../", "http://books.toscrape.com/")
 
         # récupération des valeurs contenues dans le tableau "Product Information"
-        liste_temp = [p.get_text() for p in page_parsed.find('table',{'class':'table table-striped'}).findAll('td')]
+        liste_temp = [p.get_text() for p in page_parsed.find('table', {'class': 'table table-striped'}).findAll('td')]
 
     # création d'un dictionnaire pour stocker les éléments de chaque page
         book_dict = {
-                    'product_page_url':url_book,
-                    'upc':liste_temp[0],
-                    'title':book_title,
-                    'price_including_tax':liste_temp[3],
-                    'price_excluding_tax':liste_temp[2],
-                    'number_avaible':stock_to_int(liste_temp[5]),
-                    'product_description':product_description,
-                    'category':category_name,
-                    'review_rating':book_nb_etoile_en_decimal(review_rating),
-                    'image_url':image_url,
-                    }
+            'product_page_url': url_book,
+            'upc': liste_temp[0],
+            'title': book_title,
+            'price_including_tax': liste_temp[3],
+            'price_excluding_tax': liste_temp[2],
+            'number_avaible': stock_to_int(liste_temp[5]),
+            'product_description': product_description,
+            'category': category_name,
+            'review_rating': book_nb_etoile_en_decimal(review_rating),
+            'image_url': image_url,
+        }
     return book_dict
 
 
@@ -146,43 +180,46 @@ def write_image(repertoire, name, image_url):
         with open(repertoire + name, 'wb') as file:
             shutil.copyfileobj(r.raw, file)
         del r
-    return
-     
+    return None
+
 
 # ecriture des fichiers csv et jpeg
 def write_files(list_of_books_by_category):
-    
-    # date du jour
-    jour = datetime.now().strftime(r'%Y%m%d') #'%Y-%m-%d %H:%M:%S'
+    # date du jour au format %Y-%m-%d %H:%M:%S'
+    jour = datetime.now().strftime(r'%Y%m%d')
 
     # init de la boucle while de lecture de la liste de livres
     i = 0
-    category_name = list_of_books_by_category[i]['category'] # catégorie de la ligne courante
-    previous_category_name ='' # catégorie de la ligne précédente
-
+    # catégorie de la ligne courante
+    category_name = list_of_books_by_category[i]['category']
+    # catégorie de la ligne précédente
+    previous_category_name = ''
 
     while i < len(list_of_books_by_category):
 
+        # TODO os.path.exists(chemin)
         # si on change de catégorie, on créé un nouveau répertoire et fichier csv
         if category_name != previous_category_name:
-                # nommage du répertoire et du fichier de sortie
-                repertoire_ouput = r".//output//" + category_name + r"//"
-                nom_fichier_csv = str(repertoire_ouput + jour + "-" + category_name + "-list.csv")
-                # création du répertoire output et du sous répertoire de la catégorie si inexistant
-                os.makedirs(repertoire_ouput, exist_ok=True)
-                # création du répertoire du sous répertoire images dans la catégorie                
-                repertoire_images = repertoire_ouput + r'images//'
-                os.makedirs(repertoire_images, exist_ok=True)
+            # nommage du répertoire et du fichier de sortie
+            repertoire_ouput = r".//output//" + category_name + r"//"
+            nom_fichier_csv = str(repertoire_ouput + jour + "-" + category_name + "-list.csv")
+            # création du répertoire output et du sous répertoire de la catégorie si inexistant
+            os.makedirs(repertoire_ouput, exist_ok=True)
+            # création du répertoire du sous répertoire images dans la catégorie
+            repertoire_images = repertoire_ouput + r'images//'
+            os.makedirs(repertoire_images, exist_ok=True)
 
         try:
             with open(nom_fichier_csv, 'w', encoding='utf-8', newline='') as f:
 
-                writer = csv.DictWriter(f, fieldnames=list_of_books_by_category[i].keys(), delimiter = ";")
+                writer = csv.DictWriter(f, fieldnames=list_of_books_by_category[i].keys(), delimiter=";")
 
                 # lors de la première itération sur le fichier on créé les entêtes de colonne
-                if category_name != previous_category_name and i < len(list_of_books_by_category):
+                if category_name != previous_category_name:
                     writer.writeheader()
-                #TODO a extraire proprement de la boucle if car doublon de code. On pourrait ne laisser que previous_category_name = category_name mais code pas clair a comprendre
+                # TODO a extraire proprement de la boucle if car doublon de code.
+                # On pourrait ne laisser que previous_category_name = category_name
+                # mais code pas clair a comprendre
                     writer.writerow(list_of_books_by_category[i])
                     # enregistrement du fichier image
                     link_image = list_of_books_by_category[i]['image_url']
@@ -190,11 +227,15 @@ def write_files(list_of_books_by_category):
                     write_image(repertoire_images, name_image, link_image)
 
                     i += 1
-                    previous_category_name = category_name
-                    category_name = list_of_books_by_category[i]['category']
-                ####### fin TODO #####
+                    # si on arrive en fin de liste de category
+                    if i < len(list_of_books_by_category):
+                        previous_category_name = category_name
+                        category_name = list_of_books_by_category[i]['category']
+                    else:
+                        break
+                # fin TODO
 
-                while category_name == previous_category_name and i < len(list_of_books_by_category):
+                while category_name == previous_category_name:
                     writer.writerow(list_of_books_by_category[i])
                     # enregistrement du fichier image
                     link_image = list_of_books_by_category[i]['image_url']
@@ -202,20 +243,19 @@ def write_files(list_of_books_by_category):
                     write_image(repertoire_images, name_image, link_image)
 
                     i += 1
-                    previous_category_name = category_name
-                    category_name = list_of_books_by_category[i]['category']
+                    # si on arrive en fin de liste de category
+                    if i < len(list_of_books_by_category):
+                        previous_category_name = category_name
+                        category_name = list_of_books_by_category[i]['category']
+                    else:
+                        break
 
         except Exception as err:
             print("Un problème est survenu lors de l'écriture du csv :", err)
         continue
 
 
-
-
-
-
-##### main #####
-
+# main
 url = "http://books.toscrape.com/"
 
 # on récupère la liste des categories

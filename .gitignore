@@ -1,6 +1,9 @@
 #virtual environment python subfolder
 .venv/
 
+#visual studio code
+.vscode/
+
 # Windows thumbnails and links
 Thumbs.db
 ._*
