@@ -6,11 +6,16 @@ import shutil
 import requests
 
 
-def write_image(repertoire, name, image_url):
-
+def write_image(image_url, directory, file_name):
+    """from an url, save the file in a local directory
+     Attrs:
+    - image_url : url of the image
+    - repertoire: directory to save file
+    - file_name : file name
+    """
     r = requests.get(image_url, stream=True)
     if r.status_code == 200:
-        with open(repertoire + name, 'wb') as file:
+        with open(directory + file_name, 'wb') as file:
             shutil.copyfileobj(r.raw, file)
         del r
     return None
@@ -57,7 +62,7 @@ def write_files(list_of_books_by_category):
                     # enregistrement du fichier image
                     link_image = list_of_books_by_category[i]['image_url']
                     name_image = list_of_books_by_category[i]['upc'] + '.jpg'
-                    write_image(repertoire_images, name_image, link_image)
+                    write_image(link_image, repertoire_images, name_image)
 
                     i += 1
                     # si on arrive en fin de liste de category
@@ -73,7 +78,7 @@ def write_files(list_of_books_by_category):
                     # enregistrement du fichier image
                     link_image = list_of_books_by_category[i]['image_url']
                     name_image = list_of_books_by_category[i]['upc'] + '.jpg'
-                    write_image(repertoire_images, name_image, link_image)
+                    write_image(link_image, repertoire_images, name_image)
 
                     i += 1
                     # si on arrive en fin de liste de category
