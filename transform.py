@@ -42,6 +42,6 @@ def price_str_to_float(arg):
     Returns:
      float
     """
-    # on supprime le symbole livre sterling 
+    # on supprime le symbole livre sterling
     arg = re.sub(r'£', '', arg)
     return float(arg)
