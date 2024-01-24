@@ -131,7 +131,7 @@ def parsing_page_book(book_url_dict):
             'title': title of the book
             'price_including_tax': price with taxes in pound sterling
             'price_excluding_tax': price without taxes in pound sterling
-            'number_avaible': number of books avalables
+            'number_available': number of books availables
             'product_description': all informations about the book (summary,...)
             'category': category of book
             'review_rating': number of stars of the review rating
@@ -175,7 +175,7 @@ def parsing_page_book(book_url_dict):
             'title': book_title,
             'price_including_tax': transform.price_str_to_float(product_info_list[3]),
             'price_excluding_tax': transform.price_str_to_float(product_info_list[2]),
-            'number_avaible': transform.stock_to_int(product_info_list[5]),
+            'number_available': transform.stock_to_int(product_info_list[5]),
             'product_description': product_description,
             'category': book_url_dict.get('category'),
             'review_rating': transform.book_nb_etoile_en_decimal(review_rating),
@@ -198,7 +198,7 @@ def parsing_books(url):
             'title': title of the book
             'price_including_tax': price with taxes in pound sterling
             'price_excluding_tax': price without taxes in pound sterling
-            'number_avaible': number of books avalables
+            'number_available': number of books availables
             'product_description': all informations about the book (summary,...)
             'category': category of book
             'review_rating': number of stars of the review rating
