@@ -58,11 +58,13 @@ def create_csv_file(csv_file_name, csv_directory, book_list):
     return None
 
 
-def write_images(directory, list_of_books):
+def create_images_files(directory, list_of_books):
     """from a list of books, extract images from their url to one directory
     Args:
     directory: directory to save file
     list_of_books: list of books to save the image for
+    Returns:
+     None
     """
     for book in list_of_books:
         image_url = book['image_url']
@@ -118,6 +120,6 @@ def write_files(list_of_books):
             create_csv_file(name_file_csv, directory_csv, list_of_books_by_category)
 
             # enregistrement des fichiers image
-            write_images(directory_images, list_of_books_by_category)
+            create_images_files(directory_images, list_of_books_by_category)
 
     return None
