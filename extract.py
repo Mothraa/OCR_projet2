@@ -122,9 +122,7 @@ def parsing_page_book(book_url_dict):
     page = requests.get(book_url_dict.get('book_url'))
 
     if page.status_code == 200:
-        # TODO ajouter une exception ?
-        # "Parsage" d'une page de livre
-        # lxml => interprétant "parser"
+
         page_parsed = BeautifulSoup(page.content, 'lxml')
 
         book_title = page_parsed.find('div', {'class': 'col-sm-6 product_main'}).find('h1').contents[0]
