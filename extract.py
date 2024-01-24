@@ -11,20 +11,25 @@ def get_categories_url(url):
     Returns:
     category_url_list: a list of url of categories
     """
-    page = requests.get(url)
+    try:
+        page = requests.get(url, timeout=5)
 
-    if page.status_code == 200:
-        # TODO ajouter une exception ?
-        # lxml => interprétant "parser"
-        page_parsed = BeautifulSoup(page.content, 'lxml')
-        category_url_list = []
+        if page.status_code == 200:
 
-        for link in page_parsed.find('ul', {'class': 'nav nav-list'}).find_all_next('li'):
+            page_parsed = BeautifulSoup(page.content, 'lxml')
+            category_url_list = []
 
-            # filtrage complémentaire
-            if link.parent.attrs.get('class') is None:
-                category_url_list.append('http://books.toscrape.com/' + link.contents[1].attrs['href'])
-    page.close()
+            for link in page_parsed.find('ul', {'class': 'nav nav-list'}).find_all_next('li'):
+
+                # filtrage complémentaire
+                if link.parent.attrs.get('class') is None:
+                    category_url_list.append('http://books.toscrape.com/' + link.contents[1].attrs['href'])
+        page.close()
+
+    except TimeoutError as err:
+        print("timeout lors de la récupération des pages de catégorie", err)
+    except Exception as err:
+        print("erreur lors de la récupération des pages de catégorie", err)
 
     return category_url_list
 
@@ -51,7 +56,12 @@ def categories_url_all_pages_list(category_url_list):
                 category_url_page = category_url.replace('index.html', 'page-{}.html'.format(i))
 
             # on regarde si il une page 2 existe
-            test_page_existante = requests.get(category_url_page)
+            try:
+                test_page_existante = requests.get(category_url_page, timeout=5)
+            except TimeoutError as err:
+                print("timeout lors du test des pages de catégorie", err)
+            except Exception as err:
+                print("Erreur lors du test des pages de catégorie", err)
 
             # on sort de la boucle while si la page n'existe pas
             if test_page_existante.status_code == 200:
@@ -63,6 +73,8 @@ def categories_url_all_pages_list(category_url_list):
             else:
                 print("Erreur d'accès à la page : ", test_page_existante.status_code)
                 break
+
+            test_page_existante.close()
 
     return all_pages_list
 
@@ -79,20 +91,27 @@ def parsing_book_list_by_category(url_category):
         'category',
         'book_url'
     }
-    page = requests.get(url_category)
-    category = url_category.split('/')[-2]
 
-    if page.status_code == 200:
-        page_parsed = BeautifulSoup(page.content, 'lxml')
+    try:
+        page = requests.get(url_category, timeout=5)
+        category = url_category.split('/')[-2]
 
-        # recherche des urls vers les livres
-        for link in page_parsed.find('h3').find_all_next('a'):
-            # condition complémentaire pour supprimer les doublons et le dernier lien (bouton next)
-            if len(link.attrs) == 2:
-                book_url_dict = {'category': category, 'book_url': link.attrs['href'].replace('../../../', 'http://books.toscrape.com/catalogue/')}
-                book_url_list.append(book_url_dict)
+        if page.status_code == 200:
+            page_parsed = BeautifulSoup(page.content, 'lxml')
 
-    page.close()
+            # recherche des urls vers les livres
+            for link in page_parsed.find('h3').find_all_next('a'):
+                # condition complémentaire pour supprimer les doublons et le dernier lien (bouton next)
+                if len(link.attrs) == 2:
+                    book_url_dict = {'category': category, 'book_url': link.attrs['href'].replace('../../../', 'http://books.toscrape.com/catalogue/')}
+                    book_url_list.append(book_url_dict)
+
+        page.close()
+    except TimeoutError as err:
+        print("timeout lors de la récupération des pages de catégorie", err)
+    except Exception as err:
+        print("Erreur lors de la récupération des pages de catégorie", err)
+
     return book_url_list
 
 
@@ -119,7 +138,12 @@ def parsing_page_book(book_url_dict):
             'image_url': url of the image cover
         }
     """
-    page = requests.get(book_url_dict.get('book_url'))
+    try:
+        page = requests.get(book_url_dict.get('book_url'), timeout=5)
+    except TimeoutError as err:
+        print("timeout lors de la récupération des pages de catégorie", err)
+    except Exception as err:
+        print("Erreur lors de la récupération des pages de catégorie", err)
 
     if page.status_code == 200:
 
