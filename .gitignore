@@ -1,5 +1,6 @@
 #virtual environment python subfolder
 .venv/
+.env/
 
 #visual studio code
 .vscode/
@@ -12,7 +13,11 @@ Thumbs.db
 # backups
 *.bak
 
+# for debug only
+debugging.py
+
 # subfolders
+__pycache__/
 .result/
 .output/
 output/
