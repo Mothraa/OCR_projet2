@@ -125,7 +125,8 @@ Exemple :
 
 La dénomination des versions suit la spécification décrite par la [Gestion sémantique de version](https://semver.org/lang/fr/)
 
-Les versions disponibles ainsi que les journaux décrivant les changements apportés sont disponibles depuis [la page des Releases][mettre le lien ici].
+Les versions disponibles ainsi que les journaux décrivant les changements apportés sont disponibles depuis....
+
 
 ## Licence
 
