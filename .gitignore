@@ -1,6 +1,8 @@
 #virtual environment python subfolder
 .venv/
 .env/
+venv/
+env/
 
 #visual studio code
 .vscode/
