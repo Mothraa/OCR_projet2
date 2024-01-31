@@ -1,7 +1,7 @@
 import re
 
 
-def book_nb_etoile_en_decimal(arg):
+def book_nb_stars_to_decimal(arg: str) -> int:
     """Transform a string with a number write in letters to an integer
     Args:
      arg: a string
@@ -20,8 +20,7 @@ def book_nb_etoile_en_decimal(arg):
     return stars_number
 
 
-# extrait de la chaine de caractère du stock d'un livre, un nombre décimal
-def stock_to_int(arg):
+def stock_to_int(arg: str) -> int:
     """extract an integer from a string
     Args:
      arg: a string
@@ -35,13 +34,12 @@ def stock_to_int(arg):
     return stock_nb
 
 
-def price_str_to_float(arg):
+def price_str_to_float(arg: str) -> float:
     """remove the symbol £ (ASCII \xa3) from string and transform to float
     Args:
      arg: a string
     Returns:
      float
     """
-    # on supprime le symbole livre sterling
     arg = re.sub(r'£', '', arg)
     return float(arg)
