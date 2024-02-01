@@ -39,6 +39,10 @@ pip install -r requirements.txt
 ## Utilisation
 
 Executer le script main.py
+dans le terminal :
+```bash
+python main.py
+```
 
 ## Langages & Frameworks
 
@@ -80,7 +84,7 @@ A partir de la page d'accueil du site http://books.toscrape.com/ l'ensemble de c
 
 ### Chargement des données
 
-Pour chaque livre, ses informations sont sauvegardées au format tabulaire (csv) ainsi que leur couverture au format .jpg (jpeg)
+Pour chaque livre, ses informations sont sauvegardées au format tabulaire (csv) ainsi que leurs couvertures au format .jpg (jpeg)
 
 #### CSV
 
@@ -125,8 +129,7 @@ Exemple :
 
 La dénomination des versions suit la spécification décrite par la [Gestion sémantique de version](https://semver.org/lang/fr/)
 
-Les versions disponibles ainsi que les journaux décrivant les changements apportés sont disponibles depuis....
-
+Les versions disponibles ainsi que les journaux décrivant les changements apportés sont disponibles depuis [la section releases](https://github.com/Mothraa/OCR_projet2/releases)
 
 ## Licence
 
