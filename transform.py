@@ -20,18 +20,18 @@ def book_nb_stars_to_decimal(arg: str) -> int:
     return stars_number
 
 
-def stock_to_int(arg: str) -> int:
+def str_to_int(arg: str) -> int:
     """extract an integer from a string
     Args:
      arg: a string
     Returns:
-     stock_nb: one integer, -1 if not found
+     number: one integer, -1 if not found
     """
     if re.findall(r"\d+", arg)[0].isdigit():
-        stock_nb = int(re.findall(r"\d+", arg)[0])
+        number = int(re.findall(r"\d+", arg)[0])
     else:
-        stock_nb = -1
-    return stock_nb
+        number = -1
+    return number
 
 
 def price_str_to_float(arg: str) -> float:

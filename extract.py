@@ -4,12 +4,42 @@ from bs4 import BeautifulSoup
 import transform
 
 
-def get_categories_url(url):
+def get_pages_number(url: str) -> int:
+    """from a url, retrieves the number of result pages to browse
+    Args:
+     url (str): a string with url
+    Returns:
+     nb_pages (int): one integer, -1 if not found
+    """
+    try:
+        page = requests.get(url, timeout=5)
+
+        if page.status_code == 200:
+            page_parsed = BeautifulSoup(page.content, 'lxml')
+
+            nb_pages = page_parsed.find('ul', {'class': 'pager'}).find('li', {'class': 'current'}).contents[0]
+            nb_pages = transform.str_to_int(nb_pages.split()[-1])
+
+        page.close()
+
+    # exception quand le numero de page n'existe pas (càd qu'il n'y a qu'une page)
+    # ex: http://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html
+    except AttributeError:
+        nb_pages = 1
+    except TimeoutError as err:
+        print("timeout lors de la récupération de la page", err)
+    except Exception as err:
+        print("Erreur lors de la récupération de la page", err)
+
+    return nb_pages
+
+
+def get_categories_url(url: str):
     """from the url of the main page, find the list of category urls
     Args:
      url: a string with url
     Returns:
-    category_url_list: a list of url of categories
+     category_url_list: a list of url of categories
     """
     try:
         page = requests.get(url, timeout=5)
@@ -45,36 +75,17 @@ def categories_url_all_pages_list(category_url_list):
 
     for category_url in category_url_list:
 
-        i = 1
-        while True:
+        number_of_pages = get_pages_number(category_url)
 
-            category_url_page = category_url
-
-            # when there is only one page, we read index.html
-            # then page-2.html, page-3.html...
-            if i > 1:
-                category_url_page = category_url.replace('index.html', 'page-{}.html'.format(i))
-
-            # on regarde si il une page 2 existe
-            try:
-                test_page_existante = requests.get(category_url_page, timeout=5)
-            except TimeoutError as err:
-                print("timeout lors du test des pages de catégorie", err)
-            except Exception as err:
-                print("Erreur lors du test des pages de catégorie", err)
-
-            # on sort de la boucle while si la page n'existe pas
-            if test_page_existante.status_code == 200:
-
-                all_pages_list.append(category_url_page)
+        if number_of_pages == 1:
+            # pas de modif, on reprend l'url tel quel
+            all_pages_list.append(category_url)
+        elif number_of_pages > 1:
+            i = 1
+            while i <= number_of_pages:
+                # on récupère l'url de chaque page de résultat
+                all_pages_list.append(category_url.replace('index.html', 'page-{}.html'.format(i)))
                 i += 1
-            elif test_page_existante.status_code == 404:
-                break
-            else:
-                print("Erreur d'accès à la page : ", test_page_existante.status_code)
-                break
-
-            test_page_existante.close()
 
     return all_pages_list
 
@@ -175,10 +186,10 @@ def parsing_page_book(book_url_dict):
             'title': book_title,
             'price_including_tax': transform.price_str_to_float(product_info_list[3]),
             'price_excluding_tax': transform.price_str_to_float(product_info_list[2]),
-            'number_available': transform.stock_to_int(product_info_list[5]),
+            'number_available': transform.str_to_int(product_info_list[5]),
             'product_description': product_description,
             'category': book_url_dict.get('category'),
-            'review_rating': transform.book_nb_etoile_en_decimal(review_rating),
+            'review_rating': transform.book_nb_stars_to_decimal(review_rating),
             'image_url': image_url,
         }
     page.close()
