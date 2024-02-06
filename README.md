@@ -47,7 +47,7 @@ python main.py
 ## Langages & Frameworks
 
 Développé sous python 3.12.1
-avec l'aide de :
+avec l'aide des librairies :
 - BeautifulSoup4 https://pypi.org/project/beautifulsoup4/
 - requests https://pypi.org/project/requests/
 
@@ -109,7 +109,7 @@ Une ligne du CSV représente un livre de la catégorie.
 #### Images
 
 Les images (couvertures des livres) sont stockées dans le sous répertoire \images de chaque catégorie.
-Chaque image est nommée suivant son identifiant UPC (unique).
+Chaque image est nommée suivant son identifiant UPC (universal product code) unique, indiqué dans le fichier CSV.
 
 #### Arborescence
 
