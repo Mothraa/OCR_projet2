@@ -19,7 +19,7 @@ git clone https://github.com/Mothraa/OCR_projet2.git
 ```
 Créer l'environnement avec [venv](https://docs.python.org/fr/3/library/venv.html)
 ```bash
-virtualenv venv
+python -m venv env
 ```
 Activer l'environnement
 
