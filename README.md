@@ -25,11 +25,11 @@ Activer l'environnement
 
 - sous linux ou mac
 ```bash
-source venv/bin/activate
+source env/bin/activate
 ```
 - sous windows
 ```bash
-.venv/scripts/activate
+env/scripts/activate
 ```
 Utiliser le gestionnaire de package [pip](https://docs.python.org/fr/dev/installing/index.html) pour installer les librairies python
 ```bash
