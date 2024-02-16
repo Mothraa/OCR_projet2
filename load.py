@@ -71,7 +71,7 @@ def create_images_files(directory, list_of_books):
         file_name = book['upc'] + '.jpg'
 
         try:
-            r = requests.get(image_url, stream=True, timeout=5)
+            r = requests.get(image_url, stream=True, timeout=None)
             if r.status_code == 200:
 
                 # création du fichier

@@ -12,7 +12,7 @@ def get_pages_number(url: str) -> int:
      nb_pages (int): one integer, -1 if not found
     """
     try:
-        page = requests.get(url, timeout=5)
+        page = requests.get(url, timeout=None)
 
         if page.status_code == 200:
             page_parsed = BeautifulSoup(page.content, 'lxml')
@@ -42,7 +42,7 @@ def get_categories_url(url: str):
      category_url_list: a list of url of categories
     """
     try:
-        page = requests.get(url, timeout=5)
+        page = requests.get(url, timeout=None)
 
         if page.status_code == 200:
 
@@ -104,7 +104,7 @@ def parsing_book_list_by_category(url_category):
     }
 
     try:
-        page = requests.get(url_category, timeout=5)
+        page = requests.get(url_category, timeout=None)
         category = url_category.split('/')[-2]
 
         if page.status_code == 200:
@@ -150,7 +150,7 @@ def parsing_page_book(book_url_dict):
         }
     """
     try:
-        page = requests.get(book_url_dict.get('book_url'), timeout=5)
+        page = requests.get(book_url_dict.get('book_url'), timeout=None)
     except TimeoutError as err:
         print("timeout lors de la récupération des pages de catégorie", err)
     except Exception as err:
