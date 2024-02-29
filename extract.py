@@ -45,15 +45,20 @@ def get_categories_url(url: str):
         page = requests.get(url, timeout=None)
 
         if page.status_code == 200:
-
             page_parsed = BeautifulSoup(page.content, 'lxml')
             category_url_list = []
 
-            for link in page_parsed.find('ul', {'class': 'nav nav-list'}).find_all_next('li'):
+            
+            for link in page_parsed.find('ul', {'class': 'nav nav-list'}).find_all_next('li') :
 
                 # filtrage complémentaire
-                if link.parent.attrs.get('class') is None:
+
+                # ajout de la condition len(category_url_list) < 3 pour limiter la démo au traitement de quelques catégories
+                if link.parent.attrs.get('class') is None and len(category_url_list) < 3:
                     category_url_list.append('http://books.toscrape.com/' + link.contents[1].attrs['href'])
+                    
+                    print("récupération de la catégorie : " + link.contents[1].attrs['href'])
+
         page.close()
 
     except TimeoutError as err:

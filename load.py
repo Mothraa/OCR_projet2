@@ -51,6 +51,7 @@ def create_csv_file(csv_file_name, csv_directory, book_list):
             writer.writeheader()
             # puis on écrit l'ensemble des lignes
             writer.writerows(book_list)
+            print("écriture du CSV : " + csv_directory + csv_file_name)
 
     except Exception as err:
         print("Un problème est survenu lors de l'écriture du csv :", err)
@@ -77,7 +78,6 @@ def create_images_files(directory, list_of_books):
                 # création du fichier
                 with open(directory + file_name, 'wb') as file:
                     shutil.copyfileobj(r.raw, file)
-
                 # on supprime la connexion
                 del r
         except TimeoutError as err:
@@ -85,7 +85,7 @@ def create_images_files(directory, list_of_books):
         except Exception as err:
             print("erreur lors de la récupération et de l'enregistrement d'une image", err)
 
-    return None
+    return print("ecriture des images de couverture dans : " + directory)
 
 
 def write_files(list_of_books):
