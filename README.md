@@ -4,7 +4,7 @@
 
 Formation OpenClassRooms - Developpeur d'application python - Projet 2
 
-initiation à Python et au webscrapping, en utilisant comme ressources le site dédié : http://books.toscrape.com/
+initiation à Python et au webscraping, en utilisant comme ressources le site dédié : http://books.toscrape.com/
 
 
 ## Prérequis
@@ -61,7 +61,7 @@ avec l'aide des librairies :
 
 ### Extraction des données
 
-A partir de la page d'accueil du site http://books.toscrape.com/ l'ensemble de chaque page de livre est parcouru (scrapping) pour y récupérer les informations ci-dessous :
+A partir de la page d'accueil du site http://books.toscrape.com/ l'ensemble de chaque page de livre est parcouru (scraping) pour y récupérer les informations ci-dessous :
 
 * *product_page_url* : lien url vers le livre
 * *universal_product_code (upc)* : code universel et unique du livre
